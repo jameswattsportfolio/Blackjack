@@ -149,9 +149,9 @@ def play_game(deck_in_play=[]):
 
     # Let the user take their turn
     while hitable:
-        action = input("Hit or Stand?\n")
+        action = input("Hit, Double or Stand?\n").lower()
 
-        if action == "Hit":
+        if action == "hit" or action == "double":
             next_card, deck_in_play = draw_next_card(deck_in_play)
             print(f"You get a {next_card}")
             player_hand.append(next_card)
@@ -160,7 +160,8 @@ def play_game(deck_in_play=[]):
                 f"Your cards are: {' '.join(player_hand)} which is {player_total}"
             )
 
-        hitable = player_total < 21 and action == "Hit"
+        # Subsequent hits are only available when hitting (not doubling)
+        hitable = player_total < 21 and action == "hit"
 
     # Let the dealer play if the player hasn't bust
     if player_total < 22 and not early_conclusion:
