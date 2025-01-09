@@ -1,4 +1,4 @@
-from main import calc_total, conclude_game
+from main import calc_total, conclude_game, check_if_player_is_alive
 
 
 def test_calc_total():
@@ -35,7 +35,12 @@ def test_conclude_game():
     pair_sixes = ["6C", "6D"]
     multiple_aces_eleven = ["AH", "7D", "2S", "AC"]
 
-    assert conclude_game(blackjack_hand, good_hand) == "Player"
-    assert conclude_game(good_hand, five_of_a_kind) == "Dealer"
-    assert conclude_game(busted_hand, pair_sixes) == "Dealer"
-    assert conclude_game(multiple_aces_eleven, good_hand) == "Player"
+    assert conclude_game([blackjack_hand], good_hand) == ["Player"]
+    assert conclude_game([good_hand], five_of_a_kind) == ["Dealer"]
+    assert conclude_game([busted_hand], pair_sixes) == ["Dealer"]
+    assert conclude_game([multiple_aces_eleven], good_hand) == ["Player"]
+
+
+def test_player_gone_bust():
+    assert check_if_player_is_alive([["AC", "10H"], ["QS", "KD", "2D"]])
+    assert not check_if_player_is_alive([["5D", "6D", "7D", "8D"]])
