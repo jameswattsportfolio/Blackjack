@@ -1,4 +1,4 @@
-from main import calc_total, conclude_game, check_if_player_is_alive
+from main import calc_total, conclude_game, check_if_player_is_alive, initialise_deck, deal_initial_hand
 
 
 def test_calc_total():
@@ -44,3 +44,22 @@ def test_conclude_game():
 def test_player_gone_bust():
     assert check_if_player_is_alive([["AC", "10H"], ["QS", "KD", "2D"]])
     assert not check_if_player_is_alive([["5D", "6D", "7D", "8D"]])
+
+
+def test_initial_deal():
+    deck = initialise_deck()
+    player_hands, dealer_hand, deck = deal_initial_hand(deck)
+
+    # Checking an ordered deck
+    assert player_hands == [["AD", "3D"]]
+    assert dealer_hand == ["2D", "4D"]
+    assert deck[:2] == ["5D", "6D"]
+
+    reversed_deck = initialise_deck()
+    reversed_deck.reverse()
+    player_hands, dealer_hand, deck_in_play = deal_initial_hand(reversed_deck)
+
+    # Check reverse ordered deck
+    assert player_hands == [["KS", "JS"]]
+    assert dealer_hand == ["QS", "10S"]
+    assert deck_in_play[:2] == ["9S", "8S"]
