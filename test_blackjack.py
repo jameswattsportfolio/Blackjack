@@ -1,4 +1,4 @@
-from main import calc_total, conclude_game, check_if_player_is_alive, initialise_deck, deal_initial_hand
+from blackjack import calc_total, conclude_game, check_if_player_is_alive, initialise_deck, deal_initial_hand
 
 
 def test_calc_total():
