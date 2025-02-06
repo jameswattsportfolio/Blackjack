@@ -260,5 +260,5 @@ def play_game(deck_in_play=[]):
 
 
 # We don't want to run the entire progran dring tests
-if "pytest" not in sys.modules:
-    play_game()
+# if "pytest" not in sys.modules:
+#     play_game()
