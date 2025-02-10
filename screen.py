@@ -98,6 +98,90 @@ blackjack_canvas.create_image(426,
                               tag="face_down",
                               state="hidden")
 
+global bet_amount
+bet_amount, balance = 100, 1000
+blackjack_canvas.create_text(770,
+                             467,
+                             fill="white",
+                             font="Arial",
+                             anchor="nw",
+                             text=bet_amount,
+                             tags="bet_amount")
+
+blackjack_canvas.create_text(725,
+                             420,
+                             fill="white",
+                             anchor="nw",
+                             font="Arial",
+                             text=f"Balance: {balance}",
+                             tags="balance")
+
+
+def decrease_bet():
+    global bet_amount
+    interval = 0
+    match bet_amount:
+        case bet if bet > 10 and bet <= 100:
+            interval = 10
+        case bet if bet > 100 and bet <= 500:
+            interval = 50
+        case bet if bet > 500 and bet <= 1000:
+            interval = 100
+        case bet if bet > 1000:
+            interval = 1000
+        case _:
+            # Leave it as is
+            interval
+
+    bet_amount -= interval
+    blackjack_canvas.itemconfigure("bet_amount", text=bet_amount)
+
+
+def increase_bet():
+    global bet_amount
+    interval = 0
+    match bet_amount:
+        case bet if bet >= 0 and bet < 100:
+            interval = 10
+        case bet if bet >= 100 and bet < 500:
+            interval = 50
+        case bet if bet >= 500 and bet < 1000:
+            interval = 100
+        case bet if bet >= 1000 and bet < 10000:
+            interval = 1000
+        case _:
+            # Leave it as is
+            interval
+
+    bet_amount += interval
+    blackjack_canvas.itemconfigure("bet_amount", text=bet_amount)
+
+
+decrease_bet_button = ctk.CTkButton(root,
+                                    text="-",
+                                    width=24,
+                                    height=24,
+                                    corner_radius=0,
+                                    command=decrease_bet)
+
+increase_bet_button = ctk.CTkButton(root,
+                                    text="+",
+                                    width=24,
+                                    height=24,
+                                    corner_radius=0,
+                                    command=increase_bet)
+
+blackjack_canvas.create_window(725,
+                               482,
+                               window=decrease_bet_button,
+                               anchor="nw",
+                               tags="decrease_bet_window")
+blackjack_canvas.create_window(725,
+                               447,
+                               window=increase_bet_button,
+                               anchor="nw",
+                               tags="increase_bet_window")
+
 if "pytest" not in sys.modules:
     # This opens the GUI so do not run it when testing
     root.mainloop()
