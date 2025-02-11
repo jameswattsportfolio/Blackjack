@@ -2,9 +2,10 @@ from PIL import Image, ImageTk
 from tkinter import filedialog as fd
 import customtkinter as ctk
 import os
-import math
+import random
 import sys
-from blackjack import initialise_deck
+from time import sleep
+from blackjack import initialise_deck, deal_initial_hand
 
 # Setup CustomTKinter
 ctk.set_appearance_mode("System")
@@ -91,12 +92,16 @@ for card in initialise_deck():
 face_down_card = ImageTk.PhotoImage(
     Image.open(cur_dir + f"/images/Playing Cards/face_down.png").resize(
         (60, 85)), (60, 85))
-blackjack_canvas.create_image(426,
-                              330,
-                              image=face_down_card,
-                              anchor="nw",
-                              tag="face_down",
-                              state="hidden")
+
+# Three face down car
+for i in range(3):
+    face_down_type = "deal" if i == 0 else "dealer" if i == 1 else "double"
+    blackjack_canvas.create_image(426,
+                                  330,
+                                  image=face_down_card,
+                                  anchor="nw",
+                                  tag=f"face_down_{face_down_type}",
+                                  state="hidden")
 
 global bet_amount
 bet_amount, balance = 100, 1000
@@ -181,6 +186,56 @@ blackjack_canvas.create_window(725,
                                window=increase_bet_button,
                                anchor="nw",
                                tags="increase_bet_window")
+
+global deck_in_play
+deck_in_play = initialise_deck()
+random.shuffle(deck_in_play)
+
+
+def deal_cards_animation(cards, dest_x, dest_y, i=0):
+    card = cards[0]
+    tag = "face_down_deal"
+    x = 426
+    if i == 0:
+        blackjack_canvas.moveto(tag, x, 0)
+        blackjack_canvas.itemconfigure(tag, state="normal")
+        root.after(10, deal_cards_animation, cards, dest_x, dest_y, i + 1)
+    elif i == 100:
+        blackjack_canvas.moveto(tag, x, 330)
+        blackjack_canvas.itemconfigure(tag, state="hidden")
+        blackjack_canvas.moveto(card, dest_x, dest_y)
+        blackjack_canvas.itemconfigure(card, state="normal")
+        root.after(10, deal_cards_animation, cards[1:], dest_x, dest_y, 0)
+    else:
+        blackjack_canvas.moveto(tag, x, 0 + (3.3 * i))
+        root.after(10, deal_cards_animation, cards, dest_x, dest_y, i + 1)
+
+
+def reveal_card_at(card, x, y):
+    print("Revealing card...")
+    print(card, x, y)
+    blackjack_canvas.moveto(card, x, y)
+    blackjack_canvas.itemconfigure(card, state="normal")
+
+
+def begin_game():
+    global deck_in_play
+    player_hands, dealer_hand, deck_in_play = deal_initial_hand(deck_in_play)
+    deal_cards_animation(player_hands[0] + dealer_hand, 426, 330)
+
+
+deal_button = ctk.CTkButton(root,
+                            text="Deal",
+                            width=80,
+                            height=24,
+                            corner_radius=0,
+                            command=begin_game)
+
+blackjack_canvas.create_window(405,
+                               460,
+                               window=deal_button,
+                               anchor="nw",
+                               tags="deal")
 
 if "pytest" not in sys.modules:
     # This opens the GUI so do not run it when testing

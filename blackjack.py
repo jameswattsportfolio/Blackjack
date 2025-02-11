@@ -1,5 +1,4 @@
 import random
-import sys
 
 
 def initialise_deck():
@@ -164,7 +163,6 @@ def play_game(deck_in_play=[]):
         deck_in_play = initialise_deck()
         random.shuffle(deck_in_play)
 
-    # TODO: add in betting
     early_conclusion = False
     player_hands, dealer_hand, deck_in_play = deal_initial_hand(deck_in_play)
 
