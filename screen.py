@@ -1,3 +1,4 @@
+from math import floor
 from PIL import Image, ImageTk
 from tkinter import filedialog as fd
 import customtkinter as ctk
@@ -195,14 +196,16 @@ deck_in_play = initialise_deck()
 random.shuffle(deck_in_play)
 
 
-def deal_cards_animation(cards, dest_x, dest_y, i=0):
+def deal_cards_animation(cards, dest_xs, dest_ys, i=0):
+    dest_x, dest_y = dest_xs[0], dest_ys[0]
     card = cards[0]
     tag = "face_down_deal"
+    stopping_index = int(floor(dest_y / 3.3))
     if i == 0:
         blackjack_canvas.moveto(tag, dest_x, 0)
         blackjack_canvas.itemconfigure(tag, state="normal")
-        root.after(7, deal_cards_animation, cards, dest_x, dest_y, i + 1)
-    elif i == 100:
+        root.after(7, deal_cards_animation, cards, dest_xs, dest_ys, i + 1)
+    elif i == stopping_index:
         # Hide the dealer's fist card
         card_state = "hidden" if len(cards) == 3 else "normal"
 
@@ -227,11 +230,11 @@ def deal_cards_animation(cards, dest_x, dest_y, i=0):
                                           tag="face_down_dealer")
 
         if len(cards) > 1:
-            root.after(7, deal_cards_animation, cards[1:], dest_x + 10,
-                       dest_y - 10, 0)
+            root.after(7, deal_cards_animation, cards[1:], dest_xs[1:],
+                       dest_ys[1:], 0)
     else:
         blackjack_canvas.moveto(tag, dest_x, 0 + (3.3 * i))
-        root.after(7, deal_cards_animation, cards, dest_x, dest_y, i + 1)
+        root.after(7, deal_cards_animation, cards, dest_xs, dest_ys, i + 1)
 
 
 # def reveal_card_at(card, x, y):
@@ -259,7 +262,8 @@ def begin_game():
     cards_to_deal = [card for hand in player_hands
                      for card in hand] + dealer_hand
 
-    deal_cards_animation(cards_to_deal, 426, 330)
+    deal_cards_animation(cards_to_deal, [426, 406, 436, 476],
+                         [330, 50, 320, 50])
 
 
 deal_button = ctk.CTkButton(root,
