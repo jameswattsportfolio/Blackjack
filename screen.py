@@ -6,7 +6,7 @@ import os
 import random
 import sys
 from time import sleep
-from blackjack import initialise_deck, deal_initial_hand
+from blackjack import initialise_deck, deal_initial_hand, calc_total
 
 # Setup CustomTKinter
 ctk.set_appearance_mode("System")
@@ -232,6 +232,8 @@ def deal_cards_animation(cards, dest_xs, dest_ys, i=0):
         if len(cards) > 1:
             root.after(7, deal_cards_animation, cards[1:], dest_xs[1:],
                        dest_ys[1:], 0)
+        else:
+            show_available_buttons()
     else:
         blackjack_canvas.moveto(tag, dest_x, 0 + (3.3 * i))
         root.after(7, deal_cards_animation, cards, dest_xs, dest_ys, i + 1)
@@ -255,15 +257,75 @@ blackjack_canvas.create_image(426,
                               state="hidden")
 
 
+def draw_card():
+    pass
+
+
+def next_hand():
+    pass
+
+
+def show_available_buttons():
+    global player_hands, dealer_hand
+
+    if "A" in dealer_hand[0]:
+        # Ask for insurance
+        pass
+
+    hitable = calc_total(player_hands[0]) < 21
+    doublable = len(player_hands[0]) == 2
+    splitable = len(
+        player_hands[0]
+    ) == 2 and player_hands[0][0][:-1] == player_hands[0][1][:-1]
+
+    print("Hitable:  ", hitable)
+
+    if hitable:
+        hit_button = ctk.CTkButton(root,
+                                   text="Hit",
+                                   width=80,
+                                   height=24,
+                                   corner_radius=0,
+                                   command=draw_card)
+
+        stick_button = ctk.CTkButton(root,
+                                     text="Stick",
+                                     width=80,
+                                     height=24,
+                                     corner_radius=0,
+                                     command=next_hand)
+
+        blackjack_canvas.create_window(405,
+                                       460,
+                                       window=hit_button,
+                                       anchor="nw",
+                                       tags="hit_window")
+
+        blackjack_canvas.create_window(525,
+                                       460,
+                                       window=stick_button,
+                                       anchor="nw",
+                                       tags="stick_window")
+
+
+global player_hands, dealer_hand
+player_hands = []
+dealer_hand = []
+
+
 def begin_game():
-    global deck_in_play
+    blackjack_canvas.itemconfigure("decrease_bet_window", state="hidden")
+    blackjack_canvas.itemconfigure("increase_bet_window", state="hidden")
+    blackjack_canvas.itemconfigure("deal_window", state="hidden")
+
+    global deck_in_play, player_hands, dealer_hand
     player_hands, dealer_hand, deck_in_play = deal_initial_hand(deck_in_play)
 
     cards_to_deal = [card for hand in player_hands
                      for card in hand] + dealer_hand
 
     deal_cards_animation(cards_to_deal, [426, 406, 436, 476],
-                         [330, 50, 320, 50])
+                         [330, 80, 320, 80])
 
 
 deal_button = ctk.CTkButton(root,
@@ -277,7 +339,7 @@ blackjack_canvas.create_window(405,
                                460,
                                window=deal_button,
                                anchor="nw",
-                               tags="deal")
+                               tags="deal_window")
 
 if "pytest" not in sys.modules:
     # This opens the GUI so do not run it when testing
