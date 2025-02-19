@@ -6,7 +6,7 @@ import os
 import random
 import sys
 from time import sleep
-from blackjack import initialise_deck, deal_initial_hand, calc_total
+from blackjack import initialise_deck, deal_initial_hand, calc_total, draw_next_card
 
 # Setup CustomTKinter
 ctk.set_appearance_mode("System")
@@ -258,7 +258,20 @@ blackjack_canvas.create_image(426,
 
 
 def draw_card():
-    pass
+    global player_hands, deck_in_play
+
+    next_card, deck_in_play = draw_next_card(deck_in_play)
+    card_number = len(player_hands[0])
+    deal_cards_animation([next_card], [426 + (card_number * 10)],
+                         [330 - (card_number * 10)])
+
+    player_hands[0].append(next_card)
+    hitable = calc_total(player_hands[0]) < 21
+
+    if hitable:
+        next_hand()
+    else:
+        show_available_buttons()
 
 
 def next_hand():
