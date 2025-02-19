@@ -268,10 +268,10 @@ def draw_card():
     player_hands[0].append(next_card)
     hitable = calc_total(player_hands[0]) < 21
 
+    show_available_buttons()
+
     if hitable:
         next_hand()
-    else:
-        show_available_buttons()
 
 
 def next_hand():
@@ -319,6 +319,9 @@ def show_available_buttons():
                                        window=stick_button,
                                        anchor="nw",
                                        tags="stick_window")
+    else:
+        blackjack_canvas.delete("hit_window")
+        blackjack_canvas.delete("stick_window")
 
 
 global player_hands, dealer_hand
