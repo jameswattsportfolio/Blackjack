@@ -196,7 +196,7 @@ deck_in_play = initialise_deck()
 random.shuffle(deck_in_play)
 
 
-def deal_cards_animation(cards, dest_xs, dest_ys, i=0):
+def deal_cards_animation(cards, dest_xs, dest_ys, i=0, initial=False):
     dest_x, dest_y = dest_xs[0], dest_ys[0]
     card = cards[0]
     tag = "face_down_deal"
@@ -204,10 +204,12 @@ def deal_cards_animation(cards, dest_xs, dest_ys, i=0):
     if i == 0:
         blackjack_canvas.moveto(tag, dest_x, 0)
         blackjack_canvas.itemconfigure(tag, state="normal")
-        root.after(7, deal_cards_animation, cards, dest_xs, dest_ys, i + 1)
+        root.after(7, deal_cards_animation, cards, dest_xs, dest_ys, i + 1,
+                   initial)
     elif i == stopping_index:
         # Hide the dealer's fist card
-        card_state = "hidden" if len(cards) == 3 else "normal"
+
+        card_state = "hidden" if len(cards) == 1 and initial else "normal"
 
         blackjack_canvas.moveto(tag, dest_x, dest_y)
         blackjack_canvas.itemconfigure(tag, state="hidden")
@@ -215,28 +217,29 @@ def deal_cards_animation(cards, dest_xs, dest_ys, i=0):
         global card_images
         card_image_index = initialise_deck().index(card)
 
-        if len(cards) != 3:
+        if len(cards) == 1 and initial:
+            blackjack_canvas.create_image(dest_x,
+                                          dest_y,
+                                          image=face_down_card,
+                                          anchor="nw",
+                                          tag="face_down_dealer")
+        else:
             blackjack_canvas.create_image(dest_x,
                                           dest_y,
                                           image=card_images[card_image_index],
                                           anchor="nw",
                                           tag=card,
                                           state=card_state)
-        else:
-            blackjack_canvas.create_image(dest_x,
-                                          dest_y,
-                                          image=face_down_card,
-                                          anchor="nw",
-                                          tag="face_down_dealer")
 
         if len(cards) > 1:
             root.after(7, deal_cards_animation, cards[1:], dest_xs[1:],
-                       dest_ys[1:], 0)
+                       dest_ys[1:], 0, initial)
         else:
             show_available_buttons()
     else:
         blackjack_canvas.moveto(tag, dest_x, 0 + (3.3 * i))
-        root.after(7, deal_cards_animation, cards, dest_xs, dest_ys, i + 1)
+        root.after(7, deal_cards_animation, cards, dest_xs, dest_ys, i + 1,
+                   initial)
 
 
 # def reveal_card_at(card, x, y):
@@ -258,6 +261,7 @@ blackjack_canvas.create_image(426,
 
 
 def draw_card():
+    hide_user_actions()
     global player_hands, deck_in_play
 
     next_card, deck_in_play = draw_next_card(deck_in_play)
@@ -268,14 +272,20 @@ def draw_card():
     player_hands[0].append(next_card)
     hitable = calc_total(player_hands[0]) < 21
 
-    show_available_buttons()
-
     if hitable:
-        next_hand()
+        show_available_buttons()
+    else:
+        dealers_turn()
 
 
-def next_hand():
+def dealers_turn():
+    hide_user_actions()
     pass
+
+
+def hide_user_actions():
+    blackjack_canvas.delete("hit_window")
+    blackjack_canvas.delete("stick_window")
 
 
 def show_available_buttons():
@@ -291,8 +301,6 @@ def show_available_buttons():
         player_hands[0]
     ) == 2 and player_hands[0][0][:-1] == player_hands[0][1][:-1]
 
-    print("Hitable:  ", hitable)
-
     if hitable:
         hit_button = ctk.CTkButton(root,
                                    text="Hit",
@@ -306,7 +314,7 @@ def show_available_buttons():
                                      width=80,
                                      height=24,
                                      corner_radius=0,
-                                     command=next_hand)
+                                     command=dealers_turn)
 
         blackjack_canvas.create_window(405,
                                        460,
@@ -337,11 +345,14 @@ def begin_game():
     global deck_in_play, player_hands, dealer_hand
     player_hands, dealer_hand, deck_in_play = deal_initial_hand(deck_in_play)
 
-    cards_to_deal = [card for hand in player_hands
-                     for card in hand] + dealer_hand
+    # This is ordered in the way they are delt at the casino
+    cards_to_deal = [
+        player_hands[0][0], dealer_hand[0], player_hands[0][1], dealer_hand[1]
+    ]
 
     deal_cards_animation(cards_to_deal, [426, 406, 436, 476],
-                         [330, 80, 320, 80])
+                         [330, 80, 320, 80],
+                         initial=True)
 
 
 deal_button = ctk.CTkButton(root,
