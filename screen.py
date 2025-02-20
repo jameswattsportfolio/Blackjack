@@ -248,17 +248,6 @@ def deal_cards_animation(cards, dest_xs, dest_ys, i=0, initial=False):
 #     blackjack_canvas.moveto(card, x, y)
 #     blackjack_canvas.itemconfigure(card, state="normal")
 
-face_down_card = ImageTk.PhotoImage(
-    Image.open(cur_dir + f"/images/Playing Cards/face_down.png").resize(
-        (60, 85)), (60, 85))
-
-blackjack_canvas.create_image(426,
-                              330,
-                              image=face_down_card,
-                              anchor="nw",
-                              tag="face_down_deal",
-                              state="hidden")
-
 
 def draw_card():
     hide_user_actions()
@@ -280,7 +269,27 @@ def draw_card():
 
 def dealers_turn():
     hide_user_actions()
-    pass
+
+    global deck_in_play, player_hands, dealer_hand
+
+    # Add the cards just played to the back of the deck
+    deck_in_play = deck_in_play + [
+        # Flatten player_hands
+        card for hand in player_hands for card in hand
+    ] + dealer_hand
+
+    play_again_button = ctk.CTkButton(root,
+                                      text="Play Again",
+                                      width=80,
+                                      height=24,
+                                      corner_radius=0,
+                                      command=begin_game)
+
+    blackjack_canvas.create_window(405,
+                                   460,
+                                   window=play_again_button,
+                                   anchor="nw",
+                                   tags="play_again_window")
 
 
 def hide_user_actions():
@@ -336,8 +345,29 @@ global player_hands, dealer_hand
 player_hands = []
 dealer_hand = []
 
+face_down_card = ImageTk.PhotoImage(
+    Image.open(cur_dir + f"/images/Playing Cards/face_down.png").resize(
+        (60, 85)), (60, 85))
+
+blackjack_canvas.create_image(426,
+                              330,
+                              image=face_down_card,
+                              anchor="nw",
+                              tag="face_down_deal",
+                              state="hidden")
+
+
+def remove_all_cards():
+    for card in initialise_deck() + [
+            # Don't need to delete the faced down card that gets delt
+            "face_down_dealer",
+            "face_down_double"
+    ]:
+        blackjack_canvas.delete(card)
+
 
 def begin_game():
+    remove_all_cards()
     blackjack_canvas.itemconfigure("decrease_bet_window", state="hidden")
     blackjack_canvas.itemconfigure("increase_bet_window", state="hidden")
     blackjack_canvas.itemconfigure("deal_window", state="hidden")
