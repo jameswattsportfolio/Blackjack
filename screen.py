@@ -196,6 +196,17 @@ deck_in_play = initialise_deck()
 random.shuffle(deck_in_play)
 
 
+def update_player_scores():
+    global player_hands
+
+    for hand in player_hands:
+        score = calc_total(hand)
+        index = player_hands.index(hand)
+        blackjack_canvas.itemconfigure(f"player_score_{index}",
+                                       state="normal",
+                                       text=int(score))
+
+
 def deal_cards_animation(cards, dest_xs, dest_ys, i=0, initial=False):
     dest_x, dest_y = dest_xs[0], dest_ys[0]
     card = cards[0]
@@ -235,6 +246,7 @@ def deal_cards_animation(cards, dest_xs, dest_ys, i=0, initial=False):
             root.after(7, deal_cards_animation, cards[1:], dest_xs[1:],
                        dest_ys[1:], 0, initial)
         else:
+            update_player_scores()
             show_available_buttons()
     else:
         blackjack_canvas.moveto(tag, dest_x, 0 + (3.3 * i))
@@ -255,16 +267,16 @@ def draw_card():
 
     next_card, deck_in_play = draw_next_card(deck_in_play)
     card_number = len(player_hands[0])
+    player_hands[0].append(next_card)
     deal_cards_animation([next_card], [426 + (card_number * 10)],
                          [330 - (card_number * 10)])
 
-    player_hands[0].append(next_card)
-    hitable = calc_total(player_hands[0]) < 21
+    # hitable = calc_total(player_hands[0]) < 21
 
-    if hitable:
-        show_available_buttons()
-    else:
-        dealers_turn()
+    # if hitable:
+    #     show_available_buttons()
+    # else:
+    #     dealers_turn()
 
 
 def dealers_turn():
@@ -278,18 +290,7 @@ def dealers_turn():
         card for hand in player_hands for card in hand
     ] + dealer_hand
 
-    play_again_button = ctk.CTkButton(root,
-                                      text="Play Again",
-                                      width=80,
-                                      height=24,
-                                      corner_radius=0,
-                                      command=begin_game)
-
-    blackjack_canvas.create_window(405,
-                                   460,
-                                   window=play_again_button,
-                                   anchor="nw",
-                                   tags="play_again_window")
+    show_play_again_button()
 
 
 def hide_user_actions():
@@ -339,6 +340,22 @@ def show_available_buttons():
     else:
         blackjack_canvas.delete("hit_window")
         blackjack_canvas.delete("stick_window")
+        show_play_again_button()
+
+
+def show_play_again_button():
+    play_again_button = ctk.CTkButton(root,
+                                      text="Play Again",
+                                      width=80,
+                                      height=24,
+                                      corner_radius=0,
+                                      command=begin_game)
+
+    blackjack_canvas.create_window(405,
+                                   460,
+                                   window=play_again_button,
+                                   anchor="nw",
+                                   tags="play_again_window")
 
 
 global player_hands, dealer_hand
@@ -356,6 +373,15 @@ blackjack_canvas.create_image(426,
                               tag="face_down_deal",
                               state="hidden")
 
+blackjack_canvas.create_text(448,
+                             420,
+                             fill="white",
+                             font="Arial",
+                             anchor="nw",
+                             text="0",
+                             state="hidden",
+                             tags="player_score_0")
+
 
 def remove_all_cards():
     for card in initialise_deck() + [
@@ -370,7 +396,9 @@ def begin_game():
     remove_all_cards()
     blackjack_canvas.itemconfigure("decrease_bet_window", state="hidden")
     blackjack_canvas.itemconfigure("increase_bet_window", state="hidden")
-    blackjack_canvas.itemconfigure("deal_window", state="hidden")
+    blackjack_canvas.delete("deal_window")
+    blackjack_canvas.itemconfigure("play_again_window", state="hidden")
+    blackjack_canvas.itemconfigure("player_score_0", state="hidden")
 
     global deck_in_play, player_hands, dealer_hand
     player_hands, dealer_hand, deck_in_play = deal_initial_hand(deck_in_play)
