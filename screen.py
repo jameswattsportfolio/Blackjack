@@ -295,7 +295,7 @@ def dealers_turn():
 
 def hide_user_actions():
     blackjack_canvas.delete("hit_window")
-    blackjack_canvas.delete("stick_window")
+    blackjack_canvas.delete("stand_window")
 
 
 def show_available_buttons():
@@ -319,8 +319,8 @@ def show_available_buttons():
                                    corner_radius=0,
                                    command=draw_card)
 
-        stick_button = ctk.CTkButton(root,
-                                     text="Stick",
+        stand_button = ctk.CTkButton(root,
+                                     text="Stand",
                                      width=80,
                                      height=24,
                                      corner_radius=0,
@@ -334,12 +334,12 @@ def show_available_buttons():
 
         blackjack_canvas.create_window(525,
                                        460,
-                                       window=stick_button,
+                                       window=stand_button,
                                        anchor="nw",
-                                       tags="stick_window")
+                                       tags="stand_window")
     else:
         blackjack_canvas.delete("hit_window")
-        blackjack_canvas.delete("stick_window")
+        blackjack_canvas.delete("stand_window")
         show_play_again_button()
 
 
