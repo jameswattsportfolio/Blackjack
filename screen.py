@@ -207,6 +207,14 @@ def update_player_scores():
                                        text=int(score))
 
 
+def update_dealer_score():
+    global dealer_hand
+    score = calc_total(dealer_hand)
+    blackjack_canvas.itemconfigure("dealer_score",
+                                   state="normal",
+                                   text=int(score))
+
+
 def deal_cards_animation(cards, dest_xs, dest_ys, i=0, initial=False):
     dest_x, dest_y = dest_xs[0], dest_ys[0]
     card = cards[0]
@@ -280,6 +288,7 @@ def draw_card():
 
 
 def dealers_turn():
+    update_dealer_score()
     hide_user_actions()
 
     global deck_in_play, player_hands, dealer_hand
@@ -340,6 +349,7 @@ def show_available_buttons():
     else:
         blackjack_canvas.delete("hit_window")
         blackjack_canvas.delete("stand_window")
+        update_dealer_score()
         show_play_again_button()
 
 
@@ -382,6 +392,15 @@ blackjack_canvas.create_text(448,
                              state="hidden",
                              tags="player_score_0")
 
+blackjack_canvas.create_text(448,
+                             47,
+                             fill="white",
+                             font="Arial",
+                             anchor="nw",
+                             text="0",
+                             state="hidden",
+                             tags="dealer_score")
+
 
 def remove_all_cards():
     for card in initialise_deck() + [
@@ -399,6 +418,7 @@ def begin_game():
     blackjack_canvas.delete("deal_window")
     blackjack_canvas.itemconfigure("play_again_window", state="hidden")
     blackjack_canvas.itemconfigure("player_score_0", state="hidden")
+    blackjack_canvas.itemconfigure("dealer_score", state="hidden")
 
     global deck_in_play, player_hands, dealer_hand
     player_hands, dealer_hand, deck_in_play = deal_initial_hand(deck_in_play)
@@ -408,7 +428,7 @@ def begin_game():
         player_hands[0][0], dealer_hand[0], player_hands[0][1], dealer_hand[1]
     ]
 
-    deal_cards_animation(cards_to_deal, [426, 406, 436, 476],
+    deal_cards_animation(cards_to_deal, [426, 396, 436, 466],
                          [330, 80, 320, 80],
                          initial=True)
 
