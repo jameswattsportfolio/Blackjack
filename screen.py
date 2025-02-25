@@ -291,7 +291,17 @@ def dealers_turn():
     update_dealer_score()
     hide_user_actions()
 
-    global deck_in_play, player_hands, dealer_hand
+    global deck_in_play, player_hands, dealer_hand, card_images
+
+    # Reveal face down card
+    card = dealer_hand[1]
+    card_image_index = initialise_deck().index(card)
+    blackjack_canvas.delete("update_dealer_score")
+    blackjack_canvas.create_image(466,
+                                  80,
+                                  image=card_images[card_image_index],
+                                  anchor="nw",
+                                  tag=card)
 
     # Add the cards just played to the back of the deck
     deck_in_play = deck_in_play + [
