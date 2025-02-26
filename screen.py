@@ -287,11 +287,49 @@ def draw_card():
     #     dealers_turn()
 
 
-def dealers_turn():
-    update_dealer_score()
-    hide_user_actions()
-
+def deal_dealer_cards(i=0):
     global deck_in_play, player_hands, dealer_hand, card_images
+
+    hitable = calc_total(dealer_hand) < 17
+
+    if hitable:
+        tag = "face_down_deal"
+        card_count = len(dealer_hand)
+
+        if i == 0:
+            blackjack_canvas.moveto(tag, 396 + (card_count * 70), 0)
+            blackjack_canvas.itemconfigure(tag, state="normal")
+            root.after(14, deal_dealer_cards, i + 1)
+        elif i == 24:
+            card, deck_in_play = draw_next_card(deck_in_play)
+            dealer_hand.append(card)
+            card_image_index = initialise_deck().index(card)
+            blackjack_canvas.itemconfigure(tag, state="hidden")
+            blackjack_canvas.create_image(396 + (card_count * 70),
+                                          80,
+                                          image=card_images[card_image_index],
+                                          anchor="nw",
+                                          tag=card,
+                                          state="normal")
+            update_dealer_score()
+            root.after(14, deal_dealer_cards)
+
+        else:
+            blackjack_canvas.moveto(tag, 396 + (card_count * 70), i * 3.3)
+            root.after(14, deal_dealer_cards, i + 1)
+    else:
+        # Add the cards just played to the back of the deck
+        deck_in_play = deck_in_play + [
+            # Flatten player_hands
+            card for hand in player_hands for card in hand
+        ] + dealer_hand
+
+        show_play_again_button()
+
+
+def dealers_turn():
+
+    global player_hands, dealer_hand, card_images
 
     # Reveal face down card
     card = dealer_hand[1]
@@ -302,14 +340,14 @@ def dealers_turn():
                                   image=card_images[card_image_index],
                                   anchor="nw",
                                   tag=card)
+    update_dealer_score()
 
-    # Add the cards just played to the back of the deck
-    deck_in_play = deck_in_play + [
-        # Flatten player_hands
-        card for hand in player_hands for card in hand
-    ] + dealer_hand
-
-    show_play_again_button()
+    # Let the dealer draw cards if the player hasn't bust
+    # or doesn't have a natural blackjack
+    if not (calc_total(player_hands[0]) > 21 or
+            (calc_total(player_hands[0]) == 21 and len(player_hands[0]) == 2)):
+        hide_user_actions()
+        deal_dealer_cards()
 
 
 def hide_user_actions():
@@ -318,19 +356,19 @@ def hide_user_actions():
 
 
 def show_available_buttons():
-    global player_hands, dealer_hand
+    global player_hands, dealer_hand, deck_in_play
 
     if "A" in dealer_hand[0]:
         # Ask for insurance
         pass
 
-    hitable = calc_total(player_hands[0]) < 21
-    doublable = len(player_hands[0]) == 2
+    player_total = calc_total(player_hands[0])
+    doublable = len(player_hands[0]) == 2 and player_total < 21
     splitable = len(
         player_hands[0]
     ) == 2 and player_hands[0][0][:-1] == player_hands[0][1][:-1]
 
-    if hitable:
+    if player_total < 21:
         hit_button = ctk.CTkButton(root,
                                    text="Hit",
                                    width=80,
@@ -360,6 +398,17 @@ def show_available_buttons():
         blackjack_canvas.delete("hit_window")
         blackjack_canvas.delete("stand_window")
         update_dealer_score()
+
+        # dealer skips their turn if the player has a natural blackjack
+        if len(player_hands[0]) != 2:
+            dealers_turn()
+
+        # Add the cards just played to the back of the deck
+        deck_in_play = deck_in_play + [
+            # Flatten player_hands
+            card for hand in player_hands for card in hand
+        ] + dealer_hand
+
         show_play_again_button()
 
 
