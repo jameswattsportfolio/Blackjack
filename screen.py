@@ -6,7 +6,7 @@ import os
 import random
 import sys
 from time import sleep
-from blackjack import initialise_deck, deal_initial_hand, calc_total, draw_next_card
+from blackjack import initialise_deck, deal_initial_hand, calc_total, draw_next_card, conclude_game
 
 # Setup CustomTKinter
 ctk.set_appearance_mode("System")
@@ -107,7 +107,7 @@ face_down_card = ImageTk.PhotoImage(
 #                               tag=f"face_down_double",
 #                               state="hidden")
 
-global bet_amount
+global bet_amount, balance
 bet_amount, balance = 100, 1000
 blackjack_canvas.create_text(770,
                              467,
@@ -324,13 +324,12 @@ def deal_dealer_cards(i=0):
             card for hand in player_hands for card in hand
         ] + dealer_hand
 
+        calculate_winnings()
         show_play_again_button()
 
 
-def dealers_turn():
-
-    global player_hands, dealer_hand, card_images
-
+def reveal_dealers_second_card():
+    global dealer_hand, card_images
     # Reveal face down card
     card = dealer_hand[1]
     card_image_index = initialise_deck().index(card)
@@ -340,6 +339,11 @@ def dealers_turn():
                                   image=card_images[card_image_index],
                                   anchor="nw",
                                   tag=card)
+
+
+def dealers_turn():
+    global player_hands
+    reveal_dealers_second_card()
     update_dealer_score()
 
     # Let the dealer draw cards if the player hasn't bust
@@ -348,6 +352,8 @@ def dealers_turn():
             (calc_total(player_hands[0]) == 21 and len(player_hands[0]) == 2)):
         hide_user_actions()
         deal_dealer_cards()
+    else:
+        calculate_winnings()
 
 
 def hide_user_actions():
@@ -402,6 +408,8 @@ def show_available_buttons():
         # dealer skips their turn if the player has a natural blackjack
         if len(player_hands[0]) != 2:
             dealers_turn()
+        else:
+            reveal_dealers_second_card()
 
         # Add the cards just played to the back of the deck
         deck_in_play = deck_in_play + [
@@ -409,7 +417,28 @@ def show_available_buttons():
             card for hand in player_hands for card in hand
         ] + dealer_hand
 
+        calculate_winnings()
         show_play_again_button()
+
+
+def calculate_winnings():
+    global bet_amount, balance, player_hands, dealer_hand
+    results = conclude_game(player_hands, dealer_hand)
+
+    for i, result in enumerate(results):
+        match (result):
+            case "Player":
+                is_blackjack = calc_total(player_hands[i]) == 21 and len(
+                    player_hands[i]) == 2
+                if is_blackjack:
+                    balance = balance + (bet_amount * 2.5)
+                else:
+                    balance = balance + (bet_amount * 2)
+
+            case "Draw":
+                balance = balance + bet_amount
+
+    blackjack_canvas.itemconfigure("balance", text=f"Balance: {balance}")
 
 
 def show_play_again_button():
@@ -470,14 +499,26 @@ def remove_all_cards():
         blackjack_canvas.delete(card)
 
 
-def begin_game():
-    remove_all_cards()
+def deduct_bet():
+    global balance, bet_amount
+
+    balance = balance - bet_amount
+    blackjack_canvas.itemconfigure("balance", text=f"Balance: {balance}")
+
+
+def hide_buttons_and_reset_scores():
     blackjack_canvas.itemconfigure("decrease_bet_window", state="hidden")
     blackjack_canvas.itemconfigure("increase_bet_window", state="hidden")
     blackjack_canvas.delete("deal_window")
     blackjack_canvas.itemconfigure("play_again_window", state="hidden")
     blackjack_canvas.itemconfigure("player_score_0", state="hidden")
     blackjack_canvas.itemconfigure("dealer_score", state="hidden")
+
+
+def begin_game():
+    remove_all_cards()
+    hide_buttons_and_reset_scores()
+    deduct_bet()
 
     global deck_in_play, player_hands, dealer_hand
     player_hands, dealer_hand, deck_in_play = deal_initial_hand(deck_in_play)
