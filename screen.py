@@ -91,22 +91,6 @@ face_down_card = ImageTk.PhotoImage(
     Image.open(cur_dir + f"/images/Playing Cards/face_down.png").resize(
         (60, 85)), (60, 85))
 
-# # Three face down car
-# for i in range(3):
-#     face_down_type = "deal" if i == 0 else "dealer" if i == 1 else "double"
-# blackjack_canvas.create_image(426,
-#                               330,
-#                               image=face_down_card,
-#                               anchor="nw",
-#                               tag=f"face_down_dealer",
-#                               state="hidden")
-# blackjack_canvas.create_image(426,
-#                               330,
-#                               image=face_down_card,
-#                               anchor="nw",
-#                               tag=f"face_down_double",
-#                               state="hidden")
-
 global bet_amount, balance
 bet_amount, balance = 100, 1000
 blackjack_canvas.create_text(770,
@@ -122,7 +106,7 @@ blackjack_canvas.create_text(725,
                              fill="white",
                              anchor="nw",
                              font="Arial",
-                             text=f"Balance: {balance}",
+                             text=f"Balance: {int(balance)}",
                              tags="balance")
 
 
@@ -262,13 +246,6 @@ def deal_cards_animation(cards, dest_xs, dest_ys, i=0, initial=False):
                    initial)
 
 
-# def reveal_card_at(card, x, y):
-#     print("Revealing card...")
-#     print(card, x, y)
-#     blackjack_canvas.moveto(card, x, y)
-#     blackjack_canvas.itemconfigure(card, state="normal")
-
-
 def draw_card():
     hide_user_actions()
     global player_hands, deck_in_play
@@ -279,12 +256,16 @@ def draw_card():
     deal_cards_animation([next_card], [426 + (card_number * 10)],
                          [330 - (card_number * 10)])
 
-    # hitable = calc_total(player_hands[0]) < 21
 
-    # if hitable:
-    #     show_available_buttons()
-    # else:
-    #     dealers_turn()
+def draw_double():
+    deduct_bet()
+    hide_user_actions()
+    global player_hands, deck_in_play, player_doubled
+    player_doubled = True
+
+    next_card, deck_in_play = draw_next_card(deck_in_play)
+    player_hands[0].append(next_card)
+    deal_cards_animation([next_card], [446], [310])
 
 
 def deal_dealer_cards(i=0):
@@ -359,22 +340,38 @@ def dealers_turn():
 def hide_user_actions():
     blackjack_canvas.delete("hit_window")
     blackjack_canvas.delete("stand_window")
+    blackjack_canvas.delete("double_window")
 
 
 def show_available_buttons():
-    global player_hands, dealer_hand, deck_in_play
+    global player_hands, dealer_hand, deck_in_play, balance, bet_amount, player_doubled
 
     if "A" in dealer_hand[0]:
         # Ask for insurance
         pass
 
     player_total = calc_total(player_hands[0])
-    doublable = len(player_hands[0]) == 2 and player_total < 21
+    doublable = len(player_hands[0]
+                    ) == 2 and player_total < 21 and balance - bet_amount >= 0
     splitable = len(
         player_hands[0]
     ) == 2 and player_hands[0][0][:-1] == player_hands[0][1][:-1]
 
-    if player_total < 21:
+    if doublable:
+        double_button = ctk.CTkButton(root,
+                                      text="Double",
+                                      width=80,
+                                      height=24,
+                                      corner_radius=0,
+                                      command=draw_double)
+
+        blackjack_canvas.create_window(645,
+                                       460,
+                                       window=double_button,
+                                       anchor="nw",
+                                       tags="double_window")
+
+    if player_total < 21 and not player_doubled:
         hit_button = ctk.CTkButton(root,
                                    text="Hit",
                                    width=80,
@@ -403,6 +400,7 @@ def show_available_buttons():
     else:
         blackjack_canvas.delete("hit_window")
         blackjack_canvas.delete("stand_window")
+        blackjack_canvas.delete("double_window")
         update_dealer_score()
 
         # dealer skips their turn if the player has a natural blackjack
@@ -417,12 +415,11 @@ def show_available_buttons():
             card for hand in player_hands for card in hand
         ] + dealer_hand
 
-        calculate_winnings()
         show_play_again_button()
 
 
 def calculate_winnings():
-    global bet_amount, balance, player_hands, dealer_hand
+    global bet_amount, balance, player_hands, dealer_hand, player_doubled
     results = conclude_game(player_hands, dealer_hand)
 
     for i, result in enumerate(results):
@@ -432,6 +429,8 @@ def calculate_winnings():
                     player_hands[i]) == 2
                 if is_blackjack:
                     balance = balance + (bet_amount * 2.5)
+                elif player_doubled:
+                    balance = balance + (bet_amount * 4)
                 else:
                     balance = balance + (bet_amount * 2)
 
@@ -493,8 +492,7 @@ blackjack_canvas.create_text(448,
 def remove_all_cards():
     for card in initialise_deck() + [
             # Don't need to delete the faced down card that gets delt
-            "face_down_dealer",
-            "face_down_double"
+            "face_down_dealer"
     ]:
         blackjack_canvas.delete(card)
 
@@ -504,7 +502,8 @@ def deduct_bet():
 
     if balance - bet_amount >= 0:
         balance = balance - bet_amount
-        blackjack_canvas.itemconfigure("balance", text=f"Balance: {balance}")
+        blackjack_canvas.itemconfigure("balance",
+                                       text=f"Balance: {int(balance)}")
         return True
     else:
         return False
@@ -525,7 +524,8 @@ def begin_game():
     if valid:
         remove_all_cards()
         hide_buttons_and_reset_scores()
-        global deck_in_play, player_hands, dealer_hand
+        global deck_in_play, player_hands, dealer_hand, player_doubled
+        player_doubled = False
         player_hands, dealer_hand, deck_in_play = deal_initial_hand(
             deck_in_play)
 
