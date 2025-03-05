@@ -438,7 +438,7 @@ def calculate_winnings():
             case "Draw":
                 balance = balance + bet_amount
 
-    blackjack_canvas.itemconfigure("balance", text=f"Balance: {balance}")
+    blackjack_canvas.itemconfigure("balance", text=f"Balance: {int(balance)}")
 
 
 def show_play_again_button():
@@ -502,8 +502,12 @@ def remove_all_cards():
 def deduct_bet():
     global balance, bet_amount
 
-    balance = balance - bet_amount
-    blackjack_canvas.itemconfigure("balance", text=f"Balance: {balance}")
+    if balance - bet_amount >= 0:
+        balance = balance - bet_amount
+        blackjack_canvas.itemconfigure("balance", text=f"Balance: {balance}")
+        return True
+    else:
+        return False
 
 
 def hide_buttons_and_reset_scores():
@@ -516,21 +520,26 @@ def hide_buttons_and_reset_scores():
 
 
 def begin_game():
-    remove_all_cards()
-    hide_buttons_and_reset_scores()
-    deduct_bet()
+    valid = deduct_bet()
 
-    global deck_in_play, player_hands, dealer_hand
-    player_hands, dealer_hand, deck_in_play = deal_initial_hand(deck_in_play)
+    if valid:
+        remove_all_cards()
+        hide_buttons_and_reset_scores()
+        global deck_in_play, player_hands, dealer_hand
+        player_hands, dealer_hand, deck_in_play = deal_initial_hand(
+            deck_in_play)
 
-    # This is ordered in the way they are delt at the casino
-    cards_to_deal = [
-        player_hands[0][0], dealer_hand[0], player_hands[0][1], dealer_hand[1]
-    ]
+        # This is ordered in the way they are delt at the casino
+        cards_to_deal = [
+            player_hands[0][0], dealer_hand[0], player_hands[0][1],
+            dealer_hand[1]
+        ]
 
-    deal_cards_animation(cards_to_deal, [426, 396, 436, 466],
-                         [330, 80, 320, 80],
-                         initial=True)
+        deal_cards_animation(cards_to_deal, [426, 396, 436, 466],
+                             [330, 80, 320, 80],
+                             initial=True)
+    else:
+        print("Please bet an amount you can afford")
 
 
 deal_button = ctk.CTkButton(root,
