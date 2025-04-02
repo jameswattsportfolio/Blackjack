@@ -454,6 +454,9 @@ def show_play_again_button():
                                    anchor="nw",
                                    tags="play_again_window")
 
+    blackjack_canvas.itemconfigure("decrease_bet_window", state="normal")
+    blackjack_canvas.itemconfigure("increase_bet_window", state="normal")
+
 
 global player_hands, dealer_hand
 player_hands = []
