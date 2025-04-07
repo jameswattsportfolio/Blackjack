@@ -343,12 +343,51 @@ def hide_user_actions():
     blackjack_canvas.delete("double_window")
 
 
-def show_available_buttons():
-    global player_hands, dealer_hand, deck_in_play, balance, bet_amount, player_doubled
+def buy_insurance():
+    blackjack_canvas.delete("yes_window")
+    blackjack_canvas.delete("no_window")
+    blackjack_canvas.delete("insurance_question")
+    global bet_amount, balance, insurance
 
-    if "A" in dealer_hand[0]:
-        # Ask for insurance
-        pass
+    insurance = True
+    balance = balance - (0.5 * bet_amount)
+    blackjack_canvas.itemconfigure("balance", text=f"Balance: {int(balance)}")
+
+    check_dealer_hand()
+
+
+def pass_insurance():
+    blackjack_canvas.delete("yes_window")
+    blackjack_canvas.delete("no_window")
+    blackjack_canvas.delete("insurance_question")
+    global insurance
+    insurance = False
+    check_dealer_hand()
+
+
+def check_dealer_hand():
+    global bet_amount, balance, dealer_hand, insurance
+
+    dealer_total = calc_total(dealer_hand)
+
+    if dealer_total == 21:
+        reveal_dealers_second_card()
+
+        if insurance:
+            balance += bet_amount
+
+        # In case the player has 21
+        calculate_winnings()
+        show_play_again_button()
+    else:
+        insurance = False
+        show_available_buttons()
+
+
+def show_available_buttons():
+    global player_hands, dealer_hand, deck_in_play, balance, bet_amount, player_doubled, insurance_asked
+
+    ask_insurance = "A" in dealer_hand[0] and not insurance_asked
 
     player_total = calc_total(player_hands[0])
     doublable = len(player_hands[0]
@@ -357,7 +396,7 @@ def show_available_buttons():
         player_hands[0]
     ) == 2 and player_hands[0][0][:-1] == player_hands[0][1][:-1]
 
-    if doublable:
+    if doublable and not ask_insurance:
         double_button = ctk.CTkButton(root,
                                       text="Double",
                                       width=80,
@@ -371,7 +410,39 @@ def show_available_buttons():
                                        anchor="nw",
                                        tags="double_window")
 
-    if player_total < 21 and not player_doubled:
+    if ask_insurance:
+        insurance_asked = True
+        yes_button = ctk.CTkButton(root,
+                                   text="Yes",
+                                   width=80,
+                                   height=24,
+                                   corner_radius=0,
+                                   command=buy_insurance)
+        no_button = ctk.CTkButton(root,
+                                  text="No",
+                                  width=80,
+                                  height=24,
+                                  corner_radius=0,
+                                  command=pass_insurance)
+        blackjack_canvas.create_window(405,
+                                       470,
+                                       window=yes_button,
+                                       anchor="nw",
+                                       tags="yes_window")
+        blackjack_canvas.create_window(525,
+                                       470,
+                                       window=no_button,
+                                       anchor="nw",
+                                       tags="no_window")
+        blackjack_canvas.create_text(405,
+                                     440,
+                                     fill="white",
+                                     font="Arial",
+                                     anchor="nw",
+                                     text="Do you want to buy insurance?",
+                                     state="normal",
+                                     tags="insurance_question")
+    elif player_total < 21 and not player_doubled:
         hit_button = ctk.CTkButton(root,
                                    text="Hit",
                                    width=80,
@@ -527,8 +598,8 @@ def begin_game():
     if valid:
         remove_all_cards()
         hide_buttons_and_reset_scores()
-        global deck_in_play, player_hands, dealer_hand, player_doubled
-        player_doubled = False
+        global deck_in_play, player_hands, dealer_hand, player_doubled, insurance_asked
+        player_doubled, insurance_asked = False, False
         player_hands, dealer_hand, deck_in_play = deal_initial_hand(
             deck_in_play)
 
